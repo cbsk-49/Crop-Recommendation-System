@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Recommendation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c5e2d;
+            margin-bottom: 25px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result {
+            margin-top: 30px;
+            font-size: 1.2em;
+            color: #2c5e2d;
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🌱 Crop Recommendation System</h1>
+        <form id="crop-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="N">Nitrogen (N)</label>
+                    <input type="number" id="N" name="N" placeholder="e.g., 90" required>
+                </div>
+                <div class="form-group">
+                    <label for="P">Phosphorus (P)</label>
+                    <input type="number" id="P" name="P" placeholder="e.g., 42" required>
+                </div>
+                <div class="form-group">
+                    <label for="K">Potassium (K)</label>
+                    <input type="number" id="K" name="K" placeholder="e.g., 43" required>
+                </div>
+                <div class="form-group">
+                    <label for="temperature">Temperature (°C)</label>
+                    <input type="number" step="any" id="temperature" name="temperature" placeholder="e.g., 20.8" required>
+                </div>
+                <div class="form-group">
+                    <label for="humidity">Humidity (%)</label>
+                    <input type="number" step="any" id="humidity" name="humidity" placeholder="e.g., 82" required>
+                </div>
+                <div class="form-group">
+                    <label for="ph">pH Value</label>
+                    <input type="number" step="any" id="ph" name="ph" placeholder="e.g., 6.5" required>
+                </div>
+            </div>
+             <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="rainfall">Rainfall (mm)</label>
+                <input type="number" step="any" id="rainfall" name="rainfall" placeholder="e.g., 202" required>
+            </div>
+            <button type="submit">Recommend Crop</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('crop-form');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent the default form submission
+
+            // 1. Get form data
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // 2. Send data to the backend API
+            try {
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+
+                // 3. Display the result
+                if (result.recommended_crop) {
+                    resultDiv.innerHTML = `<h3>Recommended Crop: <strong>${result.recommended_crop.toUpperCase()}</strong></h3>`;
+                    resultDiv.style.display = 'block'; // Show the result div
+                } else if (result.error) {
+                     resultDiv.innerHTML = `<p style="color: red;">Error: ${result.error}</p>`;
+                     resultDiv.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">An error occurred while getting the recommendation.</p>`;
+                resultDiv.style.display = 'block';
+            }
+        });
+    </script>
+
+</body>
+</html>
